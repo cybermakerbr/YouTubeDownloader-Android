@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="YouTube Downloader"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="18dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="URL do vídeo ou playlist"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/urlInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="https://www.youtube.com/..."
+            android:inputType="textUri"
+            android:minHeight="52dp"
+            android:layout_marginTop="6dp" />
+
+        <RadioGroup
+            android:id="@+id/modeGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="14dp">
+
+            <RadioButton
+                android:id="@+id/videoMode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="MP4 até 1080p"
+                android:checked="true" />
+
+            <RadioButton
+                android:id="@+id/mp3Mode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="MP3 192 kbps"
+                android:layout_marginStart="14dp" />
+        </RadioGroup>
+
+        <Button
+            android:id="@+id/downloadButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="BAIXAR"
+            android:layout_marginTop="14dp" />
+
+        <Button
+            android:id="@+id/cancelButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="CANCELAR"
+            android:enabled="false" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="0"
+            android:layout_marginTop="20dp" />
+
+        <TextView
+            android:id="@+id/progressText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Aguardando..."
+            android:textSize="16sp"
+            android:layout_marginTop="10dp" />
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Arquivos serão salvos em Download/YouTube."
+            android:layout_marginTop="14dp" />
+
+    </LinearLayout>
+</ScrollView>
