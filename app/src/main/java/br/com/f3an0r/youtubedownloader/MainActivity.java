@@ -51,9 +51,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         bindViews();
-
         initializeEngines();
-
         handleIncomingShareIntent(getIntent());
     }
 
@@ -62,21 +60,11 @@ public class MainActivity extends AppCompatActivity {
         urlInput = findViewById(R.id.urlInput);
         videoMode = findViewById(R.id.videoMode);
         mp3Mode = findViewById(R.id.mp3Mode);
-
-        downloadButton =
-                findViewById(R.id.downloadButton);
-
-        cancelButton =
-                findViewById(R.id.cancelButton);
-
-        progressBar =
-                findViewById(R.id.progressBar);
-
-        progressText =
-                findViewById(R.id.progressText);
-
-        statusText =
-                findViewById(R.id.statusText);
+        downloadButton = findViewById(R.id.downloadButton);
+        cancelButton = findViewById(R.id.cancelButton);
+        progressBar = findViewById(R.id.progressBar);
+        progressText = findViewById(R.id.progressText);
+        statusText = findViewById(R.id.statusText);
 
         downloadButton.setOnClickListener(
                 v -> startDownload()
@@ -287,96 +275,38 @@ public class MainActivity extends AppCompatActivity {
                     );
                 }
 
-                /*
-                 * youtubedl-android 0.18.1
-                 *
-                 * Quando usamos processId, o callback recebe:
-                 *
-                 *   progress
-                 *   etaInSeconds
-                 *   line
-                 *
-                 * A chamada correta é:
-                 *
-                 * execute(request, callback, processId)
-                 */
-
-                YoutubeDL.DownloadProgressCallback callback =
-                        (progress, etaInSeconds, line) -> {
-
-                            runOnUiThread(() -> {
-
-                                int value =
-                                        Math.max(
-                                                0,
-                                                Math.min(
-                                                        100,
-                                                        Math.round(
-                                                                progress
-                                                        )
-                                                )
-                                        );
-
-                                progressBar.setProgress(
-                                        value
-                                );
-
-                                String eta;
-
-                                if (
-                                        etaInSeconds != null
-                                                &&
-                                        etaInSeconds >= 0
-                                ) {
-
-                                    eta =
-                                            "ETA: "
-                                                    +
-                                                    etaInSeconds
-                                                    +
-                                                    "s";
-
-                                } else {
-
-                                    eta =
-                                            "ETA: --";
-                                }
-
-                                progressText.setText(
-                                        value
-                                                +
-                                                "%  |  "
-                                                +
-                                                eta
-                                );
-
-                                if (
-                                        line != null
-                                                &&
-                                        !line.trim().isEmpty()
-                                ) {
-
-                                    statusText.setText(
-                                            line.trim()
-                                    );
-                                }
-                            });
-                        };
-
-                /*
-                 * IMPORTANTE:
-                 *
-                 * A API 0.18.1 aceita:
-                 *
-                 * execute(request, callback, processId)
-                 */
-
                 int result =
                         YoutubeDL
                                 .getInstance()
                                 .execute(
                                         request,
-                                        callback,
+                                        (progress, etaInSeconds) -> {
+
+                                            runOnUiThread(() -> {
+
+                                                int value =
+                                                        Math.max(
+                                                                0,
+                                                                Math.min(
+                                                                        100,
+                                                                        Math.round(
+                                                                                progress
+                                                                        )
+                                                                )
+                                                        );
+
+                                                progressBar.setProgress(
+                                                        value
+                                                );
+
+                                                progressText.setText(
+                                                        value
+                                                                + "% | ETA: "
+                                                                + etaInSeconds
+                                                                + "s"
+                                                );
+                                            });
+                                        },
                                         PROCESS_ID
                                 );
 
@@ -395,12 +325,10 @@ public class MainActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> {
 
-                    progressBar.setProgress(
-                            100
-                    );
+                    progressBar.setProgress(100);
 
                     progressText.setText(
-                            "100%  |  Concluído"
+                            "100% | Concluído"
                     );
 
                     statusText.setText(
@@ -430,13 +358,8 @@ public class MainActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> {
 
-                    downloadButton.setEnabled(
-                            true
-                    );
-
-                    cancelButton.setEnabled(
-                            false
-                    );
+                    downloadButton.setEnabled(true);
+                    cancelButton.setEnabled(false);
                 });
             }
         });
@@ -482,9 +405,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         String wantedExtension =
-                mp3
-                        ? ".mp3"
-                        : ".mp4";
+                mp3 ? ".mp3" : ".mp4";
 
         for (File file : files) {
 
@@ -549,13 +470,9 @@ public class MainActivity extends AppCompatActivity {
                 1
         );
 
-        Uri collection =
-                MediaStore.Downloads
-                        .EXTERNAL_CONTENT_URI;
-
         Uri uri =
                 resolver.insert(
-                        collection,
+                        MediaStore.Downloads.EXTERNAL_CONTENT_URI,
                         values
                 );
 
@@ -589,10 +506,8 @@ public class MainActivity extends AppCompatActivity {
                 int read;
 
                 while (
-                        (
-                                read =
-                                        input.read(buffer)
-                        ) != -1
+                        (read = input.read(buffer))
+                                != -1
                 ) {
 
                     output.write(
@@ -666,9 +581,7 @@ public class MainActivity extends AppCompatActivity {
 
         setIntent(intent);
 
-        handleIncomingShareIntent(
-                intent
-        );
+        handleIncomingShareIntent(intent);
     }
 
     @Override
