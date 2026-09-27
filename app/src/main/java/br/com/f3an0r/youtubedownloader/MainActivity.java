@@ -1,3 +1,4 @@
+```java
 package br.com.f3an0r.youtubedownloader;
 
 import android.content.ContentResolver;
@@ -7,7 +8,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -15,6 +15,7 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.yausername.youtubedl_android.FFmpeg;
 import com.yausername.youtubedl_android.YoutubeDL;
 import com.yausername.youtubedl_android.YoutubeDLRequest;
@@ -36,74 +37,140 @@ public class MainActivity extends AppCompatActivity {
     private TextView progressText;
     private TextView statusText;
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private final String processId = "youtube-downloader";
+    private final ExecutorService executor =
+            Executors.newSingleThreadExecutor();
+
+    private static final String PROCESS_ID =
+            "youtube-downloader";
 
     private volatile boolean running = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
 
         bindViews();
+
         initializeEngines();
+
         handleIncomingShareIntent(getIntent());
     }
 
     private void bindViews() {
+
         urlInput = findViewById(R.id.urlInput);
         videoMode = findViewById(R.id.videoMode);
         mp3Mode = findViewById(R.id.mp3Mode);
-        downloadButton = findViewById(R.id.downloadButton);
-        cancelButton = findViewById(R.id.cancelButton);
-        progressBar = findViewById(R.id.progressBar);
-        progressText = findViewById(R.id.progressText);
-        statusText = findViewById(R.id.statusText);
 
-        downloadButton.setOnClickListener(v -> startDownload());
-        cancelButton.setOnClickListener(v -> cancelDownload());
+        downloadButton =
+                findViewById(R.id.downloadButton);
+
+        cancelButton =
+                findViewById(R.id.cancelButton);
+
+        progressBar =
+                findViewById(R.id.progressBar);
+
+        progressText =
+                findViewById(R.id.progressText);
+
+        statusText =
+                findViewById(R.id.statusText);
+
+        downloadButton.setOnClickListener(
+                v -> startDownload()
+        );
+
+        cancelButton.setOnClickListener(
+                v -> cancelDownload()
+        );
     }
 
     private void initializeEngines() {
-        try {
-            YoutubeDL.getInstance().init(getApplicationContext());
-            FFmpeg.getInstance().init(getApplicationContext());
 
-            statusText.setText("yt-dlp e FFmpeg inicializados.");
+        try {
+
+            YoutubeDL.getInstance().init(
+                    getApplicationContext()
+            );
+
+            FFmpeg.getInstance().init(
+                    getApplicationContext()
+            );
+
+            statusText.setText(
+                    "yt-dlp e FFmpeg inicializados."
+            );
+
+            downloadButton.setEnabled(true);
 
         } catch (Exception e) {
+
             statusText.setText(
                     "Falha ao inicializar yt-dlp/FFmpeg: "
-                            + e.getMessage()
+                            + getExceptionMessage(e)
             );
 
             downloadButton.setEnabled(false);
         }
     }
 
-    private void handleIncomingShareIntent(Intent intent) {
+    private void handleIncomingShareIntent(
+            Intent intent
+    ) {
+
         if (intent == null) {
             return;
         }
 
-        if (Intent.ACTION_SEND.equals(intent.getAction())
-                && "text/plain".equals(intent.getType())) {
+        if (
+                Intent.ACTION_SEND.equals(
+                        intent.getAction()
+                )
+                        &&
+                "text/plain".equals(
+                        intent.getType()
+                )
+        ) {
 
-            String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
+            String sharedText =
+                    intent.getStringExtra(
+                            Intent.EXTRA_TEXT
+                    );
 
-            if (sharedText != null && !sharedText.trim().isEmpty()) {
-                urlInput.setText(sharedText.trim());
-                urlInput.setSelection(urlInput.length());
+            if (
+                    sharedText != null
+                            &&
+                    !sharedText.trim().isEmpty()
+            ) {
+
+                urlInput.setText(
+                        sharedText.trim()
+                );
+
+                urlInput.setSelection(
+                        urlInput.length()
+                );
             }
         }
     }
 
     private void startDownload() {
-        String url = urlInput.getText().toString().trim();
+
+        String url =
+                urlInput
+                        .getText()
+                        .toString()
+                        .trim();
 
         if (url.isEmpty()) {
-            urlInput.setError("Informe uma URL.");
+
+            urlInput.setError(
+                    "Informe uma URL."
+            );
+
             return;
         }
 
@@ -115,38 +182,74 @@ public class MainActivity extends AppCompatActivity {
 
         downloadButton.setEnabled(false);
         cancelButton.setEnabled(true);
-        progressBar.setProgress(0);
-        progressText.setText("Iniciando...");
-        statusText.setText("Processando URL...");
 
-        final boolean mp3 = mp3Mode.isChecked();
+        progressBar.setProgress(0);
+
+        progressText.setText(
+                "Iniciando..."
+        );
+
+        statusText.setText(
+                "Processando URL..."
+        );
+
+        final boolean mp3 =
+                mp3Mode.isChecked();
 
         executor.execute(() -> {
+
             try {
-                File workDir = new File(
+
+                File externalFilesDir =
                         getExternalFilesDir(
                                 Environment.DIRECTORY_DOWNLOADS
-                        ),
-                        "YouTubeDownloader"
-                );
+                        );
 
-                if (!workDir.exists() && !workDir.mkdirs()) {
+                if (externalFilesDir == null) {
+
+                    throw new Exception(
+                            "Diretório de armazenamento indisponível."
+                    );
+                }
+
+                File workDir =
+                        new File(
+                                externalFilesDir,
+                                "YouTubeDownloader"
+                        );
+
+                if (
+                        !workDir.exists()
+                                &&
+                        !workDir.mkdirs()
+                ) {
+
                     throw new Exception(
                             "Não foi possível criar a pasta de trabalho."
                     );
                 }
 
-                String outputTemplate = new File(
-                        workDir,
-                        "%(playlist_index)s - %(title)s.%(ext)s"
-                ).getAbsolutePath();
+                String outputTemplate =
+                        new File(
+                                workDir,
+                                "%(title)s.%(ext)s"
+                        ).getAbsolutePath();
 
-                YoutubeDLRequest request = new YoutubeDLRequest(url);
+                YoutubeDLRequest request =
+                        new YoutubeDLRequest(url);
 
-                request.addOption("-o", outputTemplate);
-                request.addOption("--no-mtime");
-                request.addOption("--no-playlist-reverse");
-                request.addOption("--newline");
+                request.addOption(
+                        "-o",
+                        outputTemplate
+                );
+
+                request.addOption(
+                        "--no-mtime"
+                );
+
+                request.addOption(
+                        "--newline"
+                );
 
                 if (mp3) {
 
@@ -173,8 +276,10 @@ public class MainActivity extends AppCompatActivity {
 
                     request.addOption(
                             "-f",
-                            "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/"
-                                    + "best[height<=1080][ext=mp4]/best[height<=1080]"
+                            "bestvideo[height<=1080][ext=mp4]+"
+                                    + "bestaudio[ext=m4a]/"
+                                    + "best[height<=1080][ext=mp4]/"
+                                    + "best[height<=1080]"
                     );
 
                     request.addOption(
@@ -183,71 +288,142 @@ public class MainActivity extends AppCompatActivity {
                     );
                 }
 
-                final YoutubeDL.DownloadProgressCallback callback =
-                        (progress, etaInSeconds) -> runOnUiThread(() -> {
+                /*
+                 * youtubedl-android 0.18.1
+                 *
+                 * Quando usamos processId, o callback recebe:
+                 *
+                 *   progress
+                 *   etaInSeconds
+                 *   line
+                 *
+                 * A chamada correta é:
+                 *
+                 * execute(request, callback, processId)
+                 */
 
-                            int value = Math.max(
-                                    0,
-                                    Math.min(100, progress)
-                            );
+                YoutubeDL.DownloadProgressCallback callback =
+                        (progress, etaInSeconds, line) -> {
 
-                            progressBar.setProgress(value);
+                            runOnUiThread(() -> {
 
-                            String eta =
-                                    etaInSeconds >= 0
-                                            ? "ETA: " + etaInSeconds + "s"
-                                            : "ETA: --";
+                                int value =
+                                        Math.max(
+                                                0,
+                                                Math.min(
+                                                        100,
+                                                        Math.round(
+                                                                progress
+                                                        )
+                                                )
+                                        );
 
-                            progressText.setText(
-                                    value + "%  |  " + eta
-                            );
-                        });
+                                progressBar.setProgress(
+                                        value
+                                );
 
-                int result = YoutubeDL.getInstance().execute(
-                        request,
-                        callback,
-                        processId
-                );
+                                String eta;
 
-                if (result == 0) {
+                                if (
+                                        etaInSeconds != null
+                                                &&
+                                        etaInSeconds >= 0
+                                ) {
 
-                    copyCompletedFilesToDownloads(
-                            workDir,
-                            mp3
-                    );
+                                    eta =
+                                            "ETA: "
+                                                    +
+                                                    etaInSeconds
+                                                    +
+                                                    "s";
 
-                    runOnUiThread(() -> {
+                                } else {
 
-                        progressBar.setProgress(100);
+                                    eta =
+                                            "ETA: --";
+                                }
 
-                        progressText.setText(
-                                "100%  |  Concluído"
-                        );
+                                progressText.setText(
+                                        value
+                                                +
+                                                "%  |  "
+                                                +
+                                                eta
+                                );
 
-                        statusText.setText(
-                                "Download concluído em Download/YouTube."
-                        );
-                    });
+                                if (
+                                        line != null
+                                                &&
+                                        !line.trim().isEmpty()
+                                ) {
 
-                } else {
+                                    statusText.setText(
+                                            line.trim()
+                                    );
+                                }
+                            });
+                        };
+
+                /*
+                 * IMPORTANTE:
+                 *
+                 * A API 0.18.1 aceita:
+                 *
+                 * execute(request, callback, processId)
+                 */
+
+                int result =
+                        YoutubeDL
+                                .getInstance()
+                                .execute(
+                                        request,
+                                        callback,
+                                        PROCESS_ID
+                                );
+
+                if (result != 0) {
 
                     throw new Exception(
-                            "yt-dlp retornou código " + result
+                            "yt-dlp retornou código "
+                                    + result
                     );
                 }
+
+                copyCompletedFilesToDownloads(
+                        workDir,
+                        mp3
+                );
+
+                runOnUiThread(() -> {
+
+                    progressBar.setProgress(
+                            100
+                    );
+
+                    progressText.setText(
+                            "100%  |  Concluído"
+                    );
+
+                    statusText.setText(
+                            "Download concluído em Download/YouTube."
+                    );
+                });
 
             } catch (Exception e) {
 
                 String message =
-                        e.getMessage() == null
-                                ? e.toString()
-                                : e.getMessage();
+                        getExceptionMessage(e);
 
-                runOnUiThread(() ->
-                        statusText.setText(
-                                "Erro: " + message
-                        )
-                );
+                runOnUiThread(() -> {
+
+                    progressText.setText(
+                            "Falha"
+                    );
+
+                    statusText.setText(
+                            "Erro: " + message
+                    );
+                });
 
             } finally {
 
@@ -255,18 +431,31 @@ public class MainActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> {
 
-                    downloadButton.setEnabled(true);
-                    cancelButton.setEnabled(false);
+                    downloadButton.setEnabled(
+                            true
+                    );
+
+                    cancelButton.setEnabled(
+                            false
+                    );
                 });
             }
         });
     }
 
     private void cancelDownload() {
+
+        if (!running) {
+            return;
+        }
+
         try {
 
-            YoutubeDL.getInstance()
-                    .destroyProcessById(processId);
+            YoutubeDL
+                    .getInstance()
+                    .destroyProcessById(
+                            PROCESS_ID
+                    );
 
             statusText.setText(
                     "Cancelamento solicitado."
@@ -276,7 +465,7 @@ public class MainActivity extends AppCompatActivity {
 
             statusText.setText(
                     "Erro ao cancelar: "
-                            + e.getMessage()
+                            + getExceptionMessage(e)
             );
         }
     }
@@ -286,14 +475,17 @@ public class MainActivity extends AppCompatActivity {
             boolean mp3
     ) throws Exception {
 
-        File[] files = workDir.listFiles();
+        File[] files =
+                workDir.listFiles();
 
         if (files == null) {
             return;
         }
 
         String wantedExtension =
-                mp3 ? ".mp3" : ".mp4";
+                mp3
+                        ? ".mp3"
+                        : ".mp4";
 
         for (File file : files) {
 
@@ -302,9 +494,14 @@ public class MainActivity extends AppCompatActivity {
             }
 
             String name =
-                    file.getName().toLowerCase();
+                    file.getName()
+                            .toLowerCase();
 
-            if (!name.endsWith(wantedExtension)) {
+            if (
+                    !name.endsWith(
+                            wantedExtension
+                    )
+            ) {
                 continue;
             }
 
@@ -314,12 +511,7 @@ public class MainActivity extends AppCompatActivity {
                     mp3
             );
 
-            // Remove o arquivo temporário após
-            // cópia bem-sucedida.
-            if (!file.delete()) {
-                // Não interrompe o processo:
-                // a cópia pública já foi criada.
-            }
+            file.delete();
         }
     }
 
@@ -359,7 +551,8 @@ public class MainActivity extends AppCompatActivity {
         );
 
         Uri collection =
-                MediaStore.Downloads.EXTERNAL_CONTENT_URI;
+                MediaStore.Downloads
+                        .EXTERNAL_CONTENT_URI;
 
         Uri uri =
                 resolver.insert(
@@ -376,20 +569,20 @@ public class MainActivity extends AppCompatActivity {
 
         try {
 
+            OutputStream output =
+                    resolver.openOutputStream(uri);
+
+            if (output == null) {
+
+                throw new Exception(
+                        "Não foi possível abrir o destino."
+                );
+            }
+
             try (
                     FileInputStream input =
-                            new FileInputStream(source);
-
-                    OutputStream output =
-                            resolver.openOutputStream(uri)
+                            new FileInputStream(source)
             ) {
-
-                if (output == null) {
-
-                    throw new Exception(
-                            "Não foi possível abrir o destino."
-                    );
-                }
 
                 byte[] buffer =
                         new byte[1024 * 1024];
@@ -397,8 +590,10 @@ public class MainActivity extends AppCompatActivity {
                 int read;
 
                 while (
-                        (read = input.read(buffer))
-                                != -1
+                        (
+                                read =
+                                        input.read(buffer)
+                        ) != -1
                 ) {
 
                     output.write(
@@ -410,6 +605,8 @@ public class MainActivity extends AppCompatActivity {
 
                 output.flush();
             }
+
+            output.close();
 
             ContentValues done =
                     new ContentValues();
@@ -438,30 +635,63 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private String getExceptionMessage(
+            Exception e
+    ) {
+
+        if (e == null) {
+            return "Erro desconhecido.";
+        }
+
+        String message =
+                e.getMessage();
+
+        if (
+                message != null
+                        &&
+                !message.trim().isEmpty()
+        ) {
+
+            return message;
+        }
+
+        return e.toString();
+    }
+
     @Override
-    protected void onNewIntent(Intent intent) {
+    protected void onNewIntent(
+            Intent intent
+    ) {
+
         super.onNewIntent(intent);
 
         setIntent(intent);
 
-        handleIncomingShareIntent(intent);
+        handleIncomingShareIntent(
+                intent
+        );
     }
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
 
         if (running) {
 
             try {
 
-                YoutubeDL.getInstance()
-                        .destroyProcessById(processId);
+                YoutubeDL
+                        .getInstance()
+                        .destroyProcessById(
+                                PROCESS_ID
+                        );
 
             } catch (Exception ignored) {
             }
         }
 
         executor.shutdownNow();
+
+        super.onDestroy();
     }
 }
+```
