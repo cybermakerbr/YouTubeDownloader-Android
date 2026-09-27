@@ -25,6 +25,9 @@ import java.io.OutputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import kotlin.Unit;
+import kotlin.jvm.functions.Function3;
+
 public class MainActivity extends AppCompatActivity {
 
     private EditText urlInput;
@@ -44,27 +47,117 @@ public class MainActivity extends AppCompatActivity {
 
     private volatile boolean running = false;
 
+    private final Function3<Float, Long, String, Unit> callback =
+            new Function3<Float, Long, String, Unit>() {
+
+                @Override
+                public Unit invoke(
+                        Float progress,
+                        Long etaInSeconds,
+                        String line
+                ) {
+
+                    runOnUiThread(() -> {
+
+                        int value = Math.max(
+                                0,
+                                Math.min(
+                                        100,
+                                        Math.round(progress)
+                                )
+                        );
+
+                        progressBar.setProgress(value);
+
+                        String eta =
+                                etaInSeconds != null
+                                        ? String.valueOf(etaInSeconds)
+                                        : "--";
+
+                        progressText.setText(
+                                value
+                                        + "% | ETA: "
+                                        + eta
+                                        + "s"
+                        );
+
+                        if (
+                                line != null
+                                        &&
+                                !line.trim().isEmpty()
+                        ) {
+
+                            statusText.setText(
+                                    line.trim()
+                            );
+                        }
+                    });
+
+                    return Unit.INSTANCE;
+                }
+            };
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(
+            Bundle savedInstanceState
+    ) {
+
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_main);
+        setContentView(
+                R.layout.activity_main
+        );
 
         bindViews();
+
         initializeEngines();
-        handleIncomingShareIntent(getIntent());
+
+        handleIncomingShareIntent(
+                getIntent()
+        );
     }
 
     private void bindViews() {
 
-        urlInput = findViewById(R.id.urlInput);
-        videoMode = findViewById(R.id.videoMode);
-        mp3Mode = findViewById(R.id.mp3Mode);
-        downloadButton = findViewById(R.id.downloadButton);
-        cancelButton = findViewById(R.id.cancelButton);
-        progressBar = findViewById(R.id.progressBar);
-        progressText = findViewById(R.id.progressText);
-        statusText = findViewById(R.id.statusText);
+        urlInput =
+                findViewById(
+                        R.id.urlInput
+                );
+
+        videoMode =
+                findViewById(
+                        R.id.videoMode
+                );
+
+        mp3Mode =
+                findViewById(
+                        R.id.mp3Mode
+                );
+
+        downloadButton =
+                findViewById(
+                        R.id.downloadButton
+                );
+
+        cancelButton =
+                findViewById(
+                        R.id.cancelButton
+                );
+
+        progressBar =
+                findViewById(
+                        R.id.progressBar
+                );
+
+        progressText =
+                findViewById(
+                        R.id.progressText
+                );
+
+        statusText =
+                findViewById(
+                        R.id.statusText
+                );
 
         downloadButton.setOnClickListener(
                 v -> startDownload()
@@ -91,7 +184,9 @@ public class MainActivity extends AppCompatActivity {
                     "yt-dlp e FFmpeg inicializados."
             );
 
-            downloadButton.setEnabled(true);
+            downloadButton.setEnabled(
+                    true
+            );
 
         } catch (Exception e) {
 
@@ -100,7 +195,9 @@ public class MainActivity extends AppCompatActivity {
                             + getExceptionMessage(e)
             );
 
-            downloadButton.setEnabled(false);
+            downloadButton.setEnabled(
+                    false
+            );
         }
     }
 
@@ -167,10 +264,17 @@ public class MainActivity extends AppCompatActivity {
 
         running = true;
 
-        downloadButton.setEnabled(false);
-        cancelButton.setEnabled(true);
+        downloadButton.setEnabled(
+                false
+        );
 
-        progressBar.setProgress(0);
+        cancelButton.setEnabled(
+                true
+        );
+
+        progressBar.setProgress(
+                0
+        );
 
         progressText.setText(
                 "Iniciando..."
@@ -223,7 +327,9 @@ public class MainActivity extends AppCompatActivity {
                         ).getAbsolutePath();
 
                 YoutubeDLRequest request =
-                        new YoutubeDLRequest(url);
+                        new YoutubeDLRequest(
+                                url
+                        );
 
                 request.addOption(
                         "-o",
@@ -280,34 +386,8 @@ public class MainActivity extends AppCompatActivity {
                                 .getInstance()
                                 .execute(
                                         request,
-                                        (progress, etaInSeconds) -> {
-
-                                            runOnUiThread(() -> {
-
-                                                int value =
-                                                        Math.max(
-                                                                0,
-                                                                Math.min(
-                                                                        100,
-                                                                        Math.round(
-                                                                                progress
-                                                                        )
-                                                                )
-                                                        );
-
-                                                progressBar.setProgress(
-                                                        value
-                                                );
-
-                                                progressText.setText(
-                                                        value
-                                                                + "% | ETA: "
-                                                                + etaInSeconds
-                                                                + "s"
-                                                );
-                                            });
-                                        },
-                                        PROCESS_ID
+                                        PROCESS_ID,
+                                        callback
                                 );
 
                 if (result != 0) {
@@ -325,7 +405,9 @@ public class MainActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> {
 
-                    progressBar.setProgress(100);
+                    progressBar.setProgress(
+                            100
+                    );
 
                     progressText.setText(
                             "100% | Concluído"
@@ -348,7 +430,8 @@ public class MainActivity extends AppCompatActivity {
                     );
 
                     statusText.setText(
-                            "Erro: " + message
+                            "Erro: "
+                                    + message
                     );
                 });
 
@@ -358,8 +441,13 @@ public class MainActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> {
 
-                    downloadButton.setEnabled(true);
-                    cancelButton.setEnabled(false);
+                    downloadButton.setEnabled(
+                            true
+                    );
+
+                    cancelButton.setEnabled(
+                            false
+                    );
                 });
             }
         });
@@ -405,7 +493,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         String wantedExtension =
-                mp3 ? ".mp3" : ".mp4";
+                mp3
+                        ? ".mp3"
+                        : ".mp4";
 
         for (File file : files) {
 
@@ -472,7 +562,8 @@ public class MainActivity extends AppCompatActivity {
 
         Uri uri =
                 resolver.insert(
-                        MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                        MediaStore.Downloads
+                                .EXTERNAL_CONTENT_URI,
                         values
                 );
 
@@ -486,7 +577,9 @@ public class MainActivity extends AppCompatActivity {
         try {
 
             OutputStream output =
-                    resolver.openOutputStream(uri);
+                    resolver.openOutputStream(
+                            uri
+                    );
 
             if (output == null) {
 
@@ -497,7 +590,9 @@ public class MainActivity extends AppCompatActivity {
 
             try (
                     FileInputStream input =
-                            new FileInputStream(source)
+                            new FileInputStream(
+                                    source
+                            )
             ) {
 
                 byte[] buffer =
@@ -506,7 +601,8 @@ public class MainActivity extends AppCompatActivity {
                 int read;
 
                 while (
-                        (read = input.read(buffer))
+                        (read =
+                                input.read(buffer))
                                 != -1
                 ) {
 
@@ -577,11 +673,17 @@ public class MainActivity extends AppCompatActivity {
             Intent intent
     ) {
 
-        super.onNewIntent(intent);
+        super.onNewIntent(
+                intent
+        );
 
-        setIntent(intent);
+        setIntent(
+                intent
+        );
 
-        handleIncomingShareIntent(intent);
+        handleIncomingShareIntent(
+                intent
+        );
     }
 
     @Override
