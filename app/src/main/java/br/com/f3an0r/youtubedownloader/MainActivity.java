@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.yausername.youtubedl_android.FFmpeg;
 import com.yausername.youtubedl_android.YoutubeDL;
 import com.yausername.youtubedl_android.YoutubeDLRequest;
+import com.yausername.youtubedl_android.YoutubeDLResponse;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -120,44 +121,28 @@ public class MainActivity extends AppCompatActivity {
     private void bindViews() {
 
         urlInput =
-                findViewById(
-                        R.id.urlInput
-                );
+                findViewById(R.id.urlInput);
 
         videoMode =
-                findViewById(
-                        R.id.videoMode
-                );
+                findViewById(R.id.videoMode);
 
         mp3Mode =
-                findViewById(
-                        R.id.mp3Mode
-                );
+                findViewById(R.id.mp3Mode);
 
         downloadButton =
-                findViewById(
-                        R.id.downloadButton
-                );
+                findViewById(R.id.downloadButton);
 
         cancelButton =
-                findViewById(
-                        R.id.cancelButton
-                );
+                findViewById(R.id.cancelButton);
 
         progressBar =
-                findViewById(
-                        R.id.progressBar
-                );
+                findViewById(R.id.progressBar);
 
         progressText =
-                findViewById(
-                        R.id.progressText
-                );
+                findViewById(R.id.progressText);
 
         statusText =
-                findViewById(
-                        R.id.statusText
-                );
+                findViewById(R.id.statusText);
 
         downloadButton.setOnClickListener(
                 v -> startDownload()
@@ -184,9 +169,7 @@ public class MainActivity extends AppCompatActivity {
                     "yt-dlp e FFmpeg inicializados."
             );
 
-            downloadButton.setEnabled(
-                    true
-            );
+            downloadButton.setEnabled(true);
 
         } catch (Exception e) {
 
@@ -195,9 +178,7 @@ public class MainActivity extends AppCompatActivity {
                             + getExceptionMessage(e)
             );
 
-            downloadButton.setEnabled(
-                    false
-            );
+            downloadButton.setEnabled(false);
         }
     }
 
@@ -264,17 +245,10 @@ public class MainActivity extends AppCompatActivity {
 
         running = true;
 
-        downloadButton.setEnabled(
-                false
-        );
+        downloadButton.setEnabled(false);
+        cancelButton.setEnabled(true);
 
-        cancelButton.setEnabled(
-                true
-        );
-
-        progressBar.setProgress(
-                0
-        );
+        progressBar.setProgress(0);
 
         progressText.setText(
                 "Iniciando..."
@@ -327,9 +301,7 @@ public class MainActivity extends AppCompatActivity {
                         ).getAbsolutePath();
 
                 YoutubeDLRequest request =
-                        new YoutubeDLRequest(
-                                url
-                        );
+                        new YoutubeDLRequest(url);
 
                 request.addOption(
                         "-o",
@@ -381,7 +353,7 @@ public class MainActivity extends AppCompatActivity {
                     );
                 }
 
-                int result =
+                YoutubeDLResponse response =
                         YoutubeDL
                                 .getInstance()
                                 .execute(
@@ -390,11 +362,12 @@ public class MainActivity extends AppCompatActivity {
                                         callback
                                 );
 
-                if (result != 0) {
+                if (
+                        response == null
+                ) {
 
                     throw new Exception(
-                            "yt-dlp retornou código "
-                                    + result
+                            "yt-dlp não retornou uma resposta."
                     );
                 }
 
@@ -405,9 +378,7 @@ public class MainActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> {
 
-                    progressBar.setProgress(
-                            100
-                    );
+                    progressBar.setProgress(100);
 
                     progressText.setText(
                             "100% | Concluído"
@@ -430,8 +401,7 @@ public class MainActivity extends AppCompatActivity {
                     );
 
                     statusText.setText(
-                            "Erro: "
-                                    + message
+                            "Erro: " + message
                     );
                 });
 
@@ -441,13 +411,9 @@ public class MainActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> {
 
-                    downloadButton.setEnabled(
-                            true
-                    );
+                    downloadButton.setEnabled(true);
 
-                    cancelButton.setEnabled(
-                            false
-                    );
+                    cancelButton.setEnabled(false);
                 });
             }
         });
@@ -493,9 +459,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         String wantedExtension =
-                mp3
-                        ? ".mp3"
-                        : ".mp4";
+                mp3 ? ".mp3" : ".mp4";
 
         for (File file : files) {
 
@@ -577,9 +541,7 @@ public class MainActivity extends AppCompatActivity {
         try {
 
             OutputStream output =
-                    resolver.openOutputStream(
-                            uri
-                    );
+                    resolver.openOutputStream(uri);
 
             if (output == null) {
 
@@ -590,9 +552,7 @@ public class MainActivity extends AppCompatActivity {
 
             try (
                     FileInputStream input =
-                            new FileInputStream(
-                                    source
-                            )
+                            new FileInputStream(source)
             ) {
 
                 byte[] buffer =
@@ -601,8 +561,7 @@ public class MainActivity extends AppCompatActivity {
                 int read;
 
                 while (
-                        (read =
-                                input.read(buffer))
+                        (read = input.read(buffer))
                                 != -1
                 ) {
 
@@ -673,17 +632,11 @@ public class MainActivity extends AppCompatActivity {
             Intent intent
     ) {
 
-        super.onNewIntent(
-                intent
-        );
+        super.onNewIntent(intent);
 
-        setIntent(
-                intent
-        );
+        setIntent(intent);
 
-        handleIncomingShareIntent(
-                intent
-        );
+        handleIncomingShareIntent(intent);
     }
 
     @Override
