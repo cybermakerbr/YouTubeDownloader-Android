@@ -15,10 +15,9 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.yausername.youtubedl_android.FFmpeg;
+import com.yausername.ffmpeg.FFmpeg;
 import com.yausername.youtubedl_android.YoutubeDL;
 import com.yausername.youtubedl_android.YoutubeDLRequest;
-import com.yausername.youtubedl_android.YoutubeDLResponse;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private final ExecutorService executor =
             Executors.newSingleThreadExecutor();
 
-    private static final String PROCESS_ID =
+    private final String processId =
             "youtube-downloader";
 
     private volatile boolean running = false;
@@ -71,15 +70,16 @@ public class MainActivity extends AppCompatActivity {
                         progressBar.setProgress(value);
 
                         String eta =
-                                etaInSeconds != null
-                                        ? String.valueOf(etaInSeconds)
-                                        : "--";
+                                etaInSeconds >= 0
+                                        ? "ETA: "
+                                                + etaInSeconds
+                                                + "s"
+                                        : "ETA: --";
 
                         progressText.setText(
                                 value
-                                        + "% | ETA: "
+                                        + "%  |  "
                                         + eta
-                                        + "s"
                         );
 
                         if (
@@ -121,28 +121,44 @@ public class MainActivity extends AppCompatActivity {
     private void bindViews() {
 
         urlInput =
-                findViewById(R.id.urlInput);
+                findViewById(
+                        R.id.urlInput
+                );
 
         videoMode =
-                findViewById(R.id.videoMode);
+                findViewById(
+                        R.id.videoMode
+                );
 
         mp3Mode =
-                findViewById(R.id.mp3Mode);
+                findViewById(
+                        R.id.mp3Mode
+                );
 
         downloadButton =
-                findViewById(R.id.downloadButton);
+                findViewById(
+                        R.id.downloadButton
+                );
 
         cancelButton =
-                findViewById(R.id.cancelButton);
+                findViewById(
+                        R.id.cancelButton
+                );
 
         progressBar =
-                findViewById(R.id.progressBar);
+                findViewById(
+                        R.id.progressBar
+                );
 
         progressText =
-                findViewById(R.id.progressText);
+                findViewById(
+                        R.id.progressText
+                );
 
         statusText =
-                findViewById(R.id.statusText);
+                findViewById(
+                        R.id.statusText
+                );
 
         downloadButton.setOnClickListener(
                 v -> startDownload()
@@ -245,8 +261,13 @@ public class MainActivity extends AppCompatActivity {
 
         running = true;
 
-        downloadButton.setEnabled(false);
-        cancelButton.setEnabled(true);
+        downloadButton.setEnabled(
+                false
+        );
+
+        cancelButton.setEnabled(
+                true
+        );
 
         progressBar.setProgress(0);
 
@@ -297,11 +318,13 @@ public class MainActivity extends AppCompatActivity {
                 String outputTemplate =
                         new File(
                                 workDir,
-                                "%(title)s.%(ext)s"
+                                "%(playlist_index)s - %(title)s.%(ext)s"
                         ).getAbsolutePath();
 
                 YoutubeDLRequest request =
-                        new YoutubeDLRequest(url);
+                        new YoutubeDLRequest(
+                                url
+                        );
 
                 request.addOption(
                         "-o",
@@ -310,6 +333,10 @@ public class MainActivity extends AppCompatActivity {
 
                 request.addOption(
                         "--no-mtime"
+                );
+
+                request.addOption(
+                        "--no-playlist-reverse"
                 );
 
                 request.addOption(
@@ -353,23 +380,11 @@ public class MainActivity extends AppCompatActivity {
                     );
                 }
 
-                YoutubeDLResponse response =
-                        YoutubeDL
-                                .getInstance()
-                                .execute(
-                                        request,
-                                        PROCESS_ID,
-                                        callback
-                                );
-
-                if (
-                        response == null
-                ) {
-
-                    throw new Exception(
-                            "yt-dlp não retornou uma resposta."
-                    );
-                }
+                YoutubeDL.getInstance().execute(
+                        request,
+                        processId,
+                        callback
+                );
 
                 copyCompletedFilesToDownloads(
                         workDir,
@@ -378,10 +393,12 @@ public class MainActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> {
 
-                    progressBar.setProgress(100);
+                    progressBar.setProgress(
+                            100
+                    );
 
                     progressText.setText(
-                            "100% | Concluído"
+                            "100%  |  Concluído"
                     );
 
                     statusText.setText(
@@ -411,9 +428,13 @@ public class MainActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> {
 
-                    downloadButton.setEnabled(true);
+                    downloadButton.setEnabled(
+                            true
+                    );
 
-                    cancelButton.setEnabled(false);
+                    cancelButton.setEnabled(
+                            false
+                    );
                 });
             }
         });
@@ -430,7 +451,7 @@ public class MainActivity extends AppCompatActivity {
             YoutubeDL
                     .getInstance()
                     .destroyProcessById(
-                            PROCESS_ID
+                            processId
                     );
 
             statusText.setText(
@@ -459,7 +480,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         String wantedExtension =
-                mp3 ? ".mp3" : ".mp4";
+                mp3
+                        ? ".mp3"
+                        : ".mp4";
 
         for (File file : files) {
 
@@ -485,7 +508,9 @@ public class MainActivity extends AppCompatActivity {
                     mp3
             );
 
-            file.delete();
+            if (!file.delete()) {
+                // Cópia já concluída.
+            }
         }
     }
 
@@ -524,10 +549,13 @@ public class MainActivity extends AppCompatActivity {
                 1
         );
 
+        Uri collection =
+                MediaStore.Downloads
+                        .EXTERNAL_CONTENT_URI;
+
         Uri uri =
                 resolver.insert(
-                        MediaStore.Downloads
-                                .EXTERNAL_CONTENT_URI,
+                        collection,
                         values
                 );
 
@@ -541,7 +569,9 @@ public class MainActivity extends AppCompatActivity {
         try {
 
             OutputStream output =
-                    resolver.openOutputStream(uri);
+                    resolver.openOutputStream(
+                            uri
+                    );
 
             if (output == null) {
 
@@ -552,7 +582,9 @@ public class MainActivity extends AppCompatActivity {
 
             try (
                     FileInputStream input =
-                            new FileInputStream(source)
+                            new FileInputStream(
+                                    source
+                            )
             ) {
 
                 byte[] buffer =
@@ -561,7 +593,8 @@ public class MainActivity extends AppCompatActivity {
                 int read;
 
                 while (
-                        (read = input.read(buffer))
+                        (read =
+                                input.read(buffer))
                                 != -1
                 ) {
 
@@ -632,11 +665,17 @@ public class MainActivity extends AppCompatActivity {
             Intent intent
     ) {
 
-        super.onNewIntent(intent);
+        super.onNewIntent(
+                intent
+        );
 
-        setIntent(intent);
+        setIntent(
+                intent
+        );
 
-        handleIncomingShareIntent(intent);
+        handleIncomingShareIntent(
+                intent
+        );
     }
 
     @Override
@@ -649,7 +688,7 @@ public class MainActivity extends AppCompatActivity {
                 YoutubeDL
                         .getInstance()
                         .destroyProcessById(
-                                PROCESS_ID
+                                processId
                         );
 
             } catch (Exception ignored) {
