@@ -1,4 +1,4 @@
-```java
+java
 package br.com.f3an0r.youtubedownloader;
 
 import android.content.ContentResolver;
@@ -694,4 +694,3 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 }
-```
